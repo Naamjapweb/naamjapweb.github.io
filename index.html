@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sankalp - Digital Chanting Counter</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2 family=Cinzel:wght@600;700;900&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- PREMIUM UI/UX THEME SYSTEM --- */
+        :root {
+            --bg-gradient: linear-gradient(180deg, #FFF8F8 0%, #FFF0F2 50%, #F5E6F7 100%);
+            --panel-bg: rgba(255, 255, 255, 0.94);
+            --ink-rich: #3E1068;
+            --ink-muted: #781D4F;
+            --sacred-gold: #E65100;
+            --glow-fluid: rgba(230, 81, 0, 0.2);
+            --line-border: rgba(219, 137, 240, 0.35);
+            --bead-surface: #FFFFFF;
+            --box-depth: 0 20px 45px rgba(162, 92, 184, 0.12);
+            --trigger-btn-bg: #3E1068;
+            --trigger-btn-text: #FFFFFF;
+            --trigger-btn-border: transparent;
+        }
+
+        [data-theme="dark"] {
+            --bg-gradient: linear-gradient(180deg, #121212 0%, #1A1A1A 50%, #0A0A0A 100%);
+            --panel-bg: rgba(30, 30, 30, 0.96);
+            --ink-rich: #F5F5F7;
+            --ink-muted: #A1A1A6;
+            --sacred-gold: #FF6D00;
+            --glow-fluid: rgba(255, 109, 0, 0.25);
+            --line-border: rgba(255, 255, 255, 0.15);
+            --bead-surface: #2C2C2E;
+            --box-depth: 0 25px 50px rgba(0, 0, 0, 0.75);
+            --trigger-btn-bg: #F5F5F7;
+            --trigger-btn-text: #121212;
+            --trigger-btn-border: #FFFFFF;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--ink-rich);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .ambient-om {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 35vw;
+            font-family: 'Cinzel', serif;
+            opacity: 0.015;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        header {
+            width: 100%;
+            max-width: 450px;
+            display: flex;
+            justify-content: flex-end;
+            z-index: 10;
+        }
+
+        .utility-cluster {
+            display: flex;
+            gap: 12px;
+        }
+
+        .action-circle {
+            background: var(--panel-bg);
+            border: 1px solid var(--line-border);
+            color: var(--ink-rich);
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.95rem;
+            font-weight: 600;
+            box-shadow: var(--box-depth);
+        }
+
+        .stage-shield {
+            width: 100%;
+            max-width: 450px;
+            background: var(--panel-bg);
+            border-radius: 32px;
+            padding: 36px 24px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--line-border);
+            box-shadow: var(--box-depth);
+            z-index: 5;
+            text-align: center;
+        }
+
+        .app-view {
+            display: none;
+        }
+
+        .app-view.active {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        h2 {
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
+            font-size: 1.6rem;
+            letter-spacing: 0.5px;
+        }
+
+        .input-wrapper {
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.8;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 16px;
+            border-radius: 14px;
+            border: 2px solid var(--line-border);
+            background: transparent;
+            color: var(--ink-rich);
+            font-size: 1rem;
+            outline: none;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--sacred-gold);
+        }
+
+        .quantum-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .grid-bead {
+            padding: 14px;
+            border: 2px solid var(--line-border);
+            border-radius: 14px;
+            background: transparent;
+            color: var(--ink-rich);
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .grid-bead.selected {
+            background: var(--sacred-gold);
+            color: #FFFFFF;
+            border-color: var(--sacred-gold);
+        }
+
+        .master-trigger {
+            width: 100%;
+            padding: 16px;
+            border: 2px solid var(--trigger-btn-border);
+            border-radius: 14px;
+            background: var(--trigger-btn-bg);
+            color: var(--trigger-btn-text);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: var(--box-depth);
+        }
+
+        /* --- INTERFACE COUNTER ENGINE --- */
+        .ring-environment {
+            position: relative;
+            width: 210px;
+            height: 210px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .core-bead {
+            width: 180px;
+            height: 180px;
+            background: var(--bead-surface);
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border: 2px solid var(--line-border);
+            position: relative;
+            z-index: 2;
+        }
+
+        .vector-ring {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 210px;
+            height: 210px;
+            transform: rotate(-90deg);
+            z-index: 1;
+        }
+
+        .vector-ring circle {
+            fill: none;
+            stroke-width: 5;
+            stroke-linecap: round;
+            transform: translate(5px, 5px);
+        }
+
+        .vector-ring .track-progress {
+            stroke: var(--sacred-gold);
+            stroke-dasharray: 628;
+            stroke-dashoffset: 628;
+            transition: stroke-dashoffset 0.2s linear;
+        }
+
+        .counter-matrix {
+            font-size: 2.6rem;
+            font-weight: 700;
+            font-family: 'Cinzel', serif;
+        }
+
+        .limit-marker {
+            font-size: 0.85rem;
+            opacity: 0.6;
+        }
+
+        .flow-status-box {
+            font-size: 1.05rem;
+            line-height: 1.5;
+        }
+
+        .flow-status-box span {
+            color: var(--sacred-gold);
+            font-weight: 600;
+        }
+
+        .devotional-alert-note {
+            font-size: 0.75rem;
+            opacity: 0.7;
+            font-weight: 500;
+            line-height: 1.4;
+            padding: 0 10px;
+            color: #D32F2F;
+        }
+        [data-theme="dark"] .devotional-alert-note {
+            color: #FF5252;
+        }
+
+        .console-stream {
+            min-height: 52px;
+            padding: 12px;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.02);
+            font-size: 0.85rem;
+            font-style: italic;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px dashed var(--line-border);
+        }
+        [data-theme="dark"] .console-stream {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .gc-promo-action-btn {
+            background: linear-gradient(135deg, #8A2387 0%, #E94057 50%, #F27121 100%);
+            color: #FFFFFF !important;
+            border: none;
+            width: 100%;
+            padding: 14px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-decoration: none;
+            box-shadow: 0 4px 15px rgba(233, 64, 87, 0.3);
+            letter-spacing: 0.5px;
+            margin-top: 4px;
+            animation: microPulse 2s infinite ease-in-out;
+        }
+        @keyframes microPulse {
+            0% { transform: scale(1); box-shadow: 0 4px 15px rgba(233, 64, 87, 0.3); }
+            50% { transform: scale(1.02); box-shadow: 0 6px 20px rgba(233, 64, 87, 0.5); }
+            100% { transform: scale(1); box-shadow: 0 4px 15px rgba(233, 64, 87, 0.3); }
+        }
+
+        .deck-controls {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .trigger-mic {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            background: var(--sacred-gold);
+            color: #FFFFFF;
+            font-size: 1.4rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 8px 20px rgba(230, 81, 0, 0.3);
+        }
+
+        .trigger-mic.hot-stream {
+            animation: haloPulse 1.4s infinite;
+        }
+
+        @keyframes haloPulse {
+            0% { box-shadow: 0 0 0 0 rgba(230, 81, 0, 0.5); }
+            70% { box-shadow: 0 0 0 14px rgba(230, 81, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(230, 81, 0, 0); }
+        }
+
+        .trigger-reset {
+            background: transparent;
+            border: 1px solid var(--line-border);
+            color: var(--ink-rich);
+            padding: 10px 22px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        /* --- MODERNIZED SANKALP CERTIFICATE UI --- */
+        .sankalp-card-frame {
+            background: #FFFDF9;
+            border: 5px double #D4AF37;
+            border-radius: 16px;
+            padding: 36px 24px;
+            box-shadow: 0 12px 35px rgba(0,0,0,0.06);
+            color: #2C1A04;
+            position: relative;
+            overflow: hidden;
+            text-align: center;
+        }
+        [data-theme="dark"] .sankalp-card-frame {
+            background: #1C1C1E;
+            border-color: #AA8417;
+            color: #F5F5F7;
+        }
+
+        /* HIGH-VISIBILITY 10% TRANSPARENCY WATERMARK */
+        .sankalp-card-frame::before {
+            content: "ॐ";
+            position: absolute;
+            font-size: 11rem;
+            font-family: 'Cinzel', serif;
+            opacity: 0.10;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #D4AF37;
+            pointer-events: none;
+        }
+
+        .cert-header {
+            font-family: 'Cinzel', serif;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #AA8417;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 12px;
+        }
+
+        .cert-title {
+            font-family: 'Cinzel', serif;
+            font-weight: 900;
+            font-size: 1.75rem;
+            margin-bottom: 20px;
+            line-height: 1.3;
+            color: var(--ink-rich);
+        }
+
+        .cert-body {
+            font-size: 0.98rem;
+            line-height: 1.8;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .cert-body strong {
+            color: var(--sacred-gold);
+            font-weight: 700;
+        }
+
+        .cert-meta-row {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            opacity: 0.8;
+            margin-bottom: 16px;
+            border-bottom: 1px dashed rgba(212, 175, 55, 0.3);
+            padding-bottom: 12px;
+        }
+
+        .cert-seal {
+            font-family: 'Cinzel', serif;
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: #AA8417;
+            margin-top: 10px;
+        }
+
+        .btn-share {
+            background: #E65100;
+            color: #FFFFFF;
+            border: none;
+            padding: 14px 28px;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(230, 81, 0, 0.2);
+        }
+
+        footer {
+            font-size: 0.78rem;
+            opacity: 0.8;
+            text-align: center;
+            margin-top: 20px;
+            letter-spacing: 0.3px;
+        }
+
+        footer a {
+            color: var(--sacred-gold);
+            font-weight: 600;
+            text-decoration: none;
+        }
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body data-theme="light">
+
+    <div class="ambient-om">ॐ</div>
+
+    <header>
+        <div class="utility-cluster">
+            <button class="action-circle" id="langBtn" title="Toggle Language">हिं</button>
+            <button class="action-circle" id="themeBtn" title="Toggle Theme">🌙</button>
+        </div>
+    </header>
+
+    <main class="stage-shield">
+        
+        <div class="app-view active" id="view1">
+            <h2 id="v1Title">स्वागतम भक्तजन</h2>
+            <div class="input-wrapper">
+                <label id="lblEnterName">अपना नाम दर्ज करें</label>
+                <input type="text" id="usernameInput" placeholder="अपना नाम दर्ज करें" autocomplete="off">
+            </div>
+            <button class="master-trigger" id="btnNext1">आगे बढ़ें</button>
+        </div>
+
+        <div class="app-view" id="view2">
+            <h2 id="v2Title">जप संकल्प</h2>
+            <div class="input-wrapper">
+                <label id="lblChantTarget">किस नाम का जप करना चाहते हैं?</label>
+                <input type="text" id="customChantInput" placeholder="जैसे: राधे कृष्णा / जय श्री राम" autocomplete="off">
+            </div>
+            <div class="input-wrapper">
+                <label id="lblCountTarget">जप संख्या निर्धारित करें</label>
+                <div class="quantum-grid" id="countGrid">
+                    <button class="grid-bead selected" data-value="51">51</button>
+                    <button class="grid-bead" data-value="108">108</button>
+                    <button class="grid-bead" data-value="501">501</button>
+                    <button class="grid-bead" data-value="1008">1008</button>
+                </div>
+            </div>
+            <button class="master-trigger" id="btnNext2">जप शुरू करें</button>
+        </div>
+
+        <div class="app-view" id="view3">
+            <div class="ring-environment">
+                <svg class="vector-ring" width="210" height="210">
+                    <circle cx="100" cy="100" r="100" stroke="transparent"></circle>
+                    <circle class="track-progress" id="progressCircle" cx="100" cy="100" r="100"></circle>
+                </svg>
+                <div class="core-bead">
+                    <div class="counter-matrix" id="liveCount">0</div>
+                    <div class="limit-marker" id="targetCount">/ 51</div>
+                </div>
+            </div>
+
+            <div class="flow-status-box" id="statusStatement"></div>
+
+            <div class="devotional-alert-note" id="alertNote">
+                ⚠️ यह वेबसाइट त्रुटि कर सकती है।
+            </div>
+
+            <div class="console-stream" id="liveSpeech">माइक तैयार है...</div>
+
+            <a href="https://ig.me/j/AbavT-6_AQvPzR6F/" target="_blank" class="gc-promo-action-btn" id="gcPromoBtn">
+                📸 Join Mastikhor Krsna Bhakt's GC 🔗
+            </a>
+
+            <div class="deck-controls">
+                <button class="trigger-reset" id="btnReset">Reset</button>
+                <button class="trigger-mic" id="btnMic">🎤</button>
+            </div>
+        </div>
+
+        <div class="app-view" id="view4">
+            <div class="sankalp-card-frame" id="certificateDownloadArea">
+                <div class="cert-header" id="certHeader">जप संकल्प प्रमाण पत्र</div>
+                <div class="cert-title" id="certTitle">॥ सिद्धि प्राकट्य ॥</div>
+                
+                <div class="cert-body" id="certBody">
+                    </div>
+
+                <div class="cert-meta-row" id="certMetaRow">
+                    </div>
+
+                <div class="cert-seal">ॐ सनातन धर्म ॐ</div>
+            </div>
+            <button class="btn-share" id="btnScreenshotHint">📸 Share This Sacred Proof</button>
+        </div>
+
+    </main>
+
+    <footer>
+        Developed by <a href="https://instagram.com/akshaetshukla.dev" target="_blank">IG: @akshaetshukla.dev</a>
+    </footer>
+
+    <script>
+        const langPack = {
+            hi: {
+                v1Title: "स्वागतम भक्तजन", lblEnterName: "अपना नाम दर्ज करें", placeholderName: "अपना नाम दर्ज करें", btnNext1: "आगे बढ़ें",
+                v2Title: "जप संकल्प", lblChantTarget: "किस नाम का जप करना चाहते हैं?", lblCountTarget: "जप संख्या निर्धारित करें", btnNext2: "जप शुरू करें",
+                isChanting: "जप कर रहे हैं", listening: "सुन रहा है... लगातार नाम जप करें", paused: "माइक बंद है। चालू करें",
+                alertNote: "⚠️ यह वेबसाइट त्रुटि कर सकती है।",
+                gcBtnText: "🔗 Join Mastikhor Krishnabhakt GC 📸",
+                certHeader: "जप संकल्प प्रमाण पत्र", certTitle: "॥ सिद्धि प्राकट्य ॥",
+                certMsg: "प्रमाणित किया जाता है कि परम भक्त <strong>[NAME]</strong> ने पूर्ण निष्ठा, शुद्ध अंतःकरण एवं दिव्य श्रद्धा के साथ मंगलकारी महामंत्र <strong>\"[CHANT]\"</strong> का <strong>[TARGET]</strong> बार सफलतापूर्वक ध्वनि-जप संपन्न किया है। <br><br>ईश्वर आपके इस पवित्र जप संकल्प को स्वीकार करें।",
+                certDateLabel: "दिनांक", shareText: "📸 Share This Sacred Proof", placeholderChant: "जैसे: राधे कृष्णा / जय श्री राम"
+            },
+            en: {
+                v1Title: "Welcome Devotee", lblEnterName: "Enter Your Name", placeholderName: "Enter your name", btnNext1: "Next",
+                v2Title: "Chant Sankalp", lblChantTarget: "What holy name do you want to chant?", lblCountTarget: "Select Chanting Target", btnNext2: "Start Chanting",
+                isChanting: "is chanting", listening: "Listening... Chant continuously", paused: "Mic Paused. Tap to resume",
+                alertNote: "⚠️ This website can make mistakes.",
+                gcBtnText: "🔗 Join Mastikhor Krishnabhakt GC 📸",
+                certHeader: "CHANTING COMPLETION CERTIFICATE", certTitle: "|| SIDDHI PRAGATYA ||",
+                certMsg: "This is to certify that Devotee <strong>[NAME]</strong> with pure devotion and structural mindfulness has successfully completed the vocal chanting of <strong>\"[CHANT]\"</strong> for <strong>[TARGET]</strong> times.<br><br>May the divine energies bless your journey.",
+                certDateLabel: "Date", shareText: "📸 Share This Sacred Proof", placeholderChant: "e.g. Radhe Krishna / Jay Shree Ram"
+            }
+        };
+
+        let appState = {
+            lang: 'hi', theme: 'light', user: '', rawChantTarget: '',
+            matchTokens: [], countTarget: 51, currentCount: 0, isListening: false,
+            processedWordsPointer: 0 
+        };
+
+        const themeBtn = document.getElementById('themeBtn');
+        const langBtn = document.getElementById('langBtn');
+        const view1 = document.getElementById('view1');
+        const view2 = document.getElementById('view2');
+        const view3 = document.getElementById('view3');
+        const view4 = document.getElementById('view4');
+
+        themeBtn.addEventListener('click', () => {
+            appState.theme = appState.theme === 'light' ? 'dark' : 'light';
+            document.body.setAttribute('data-theme', appState.theme);
+            themeBtn.textContent = appState.theme === 'light' ? '🌙' : '☀️';
+        });
+
+        langBtn.addEventListener('click', () => {
+            appState.lang = appState.lang === 'hi' ? 'en' : 'hi';
+            langBtn.textContent = appState.lang === 'hi' ? 'हिं' : 'EN';
+            applyLanguagePack();
+            if(appState.isListening) restartSpeechEngineWithNewLang();
+        });
+
+        function applyLanguagePack() {
+            const d = langPack[appState.lang];
+            document.getElementById('v1Title').textContent = d.v1Title;
+            document.getElementById('lblEnterName').textContent = d.lblEnterName;
+            document.getElementById('usernameInput').placeholder = d.placeholderName;
+            document.getElementById('btnNext1').textContent = d.btnNext1;
+            document.getElementById('v2Title').textContent = d.v2Title;
+            document.getElementById('lblChantTarget').textContent = d.lblChantTarget;
+            document.getElementById('lblCountTarget').textContent = d.lblCountTarget;
+            document.getElementById('btnNext2').textContent = d.btnNext2;
+            document.getElementById('alertNote').textContent = d.alertNote;
+            document.getElementById('gcPromoBtn').textContent = d.gcBtnText;
+            document.getElementById('customChantInput').placeholder = d.placeholderChant;
+            if(view3.classList.contains('active')) updateLiveStatusBox();
+        }
+
+        document.getElementById('btnNext1').addEventListener('click', () => {
+            const nameInput = document.getElementById('usernameInput').value.trim();
+            appState.user = nameInput ? nameInput : (appState.lang === 'hi' ? "भक्त" : "Devotee");
+            view1.classList.remove('active');
+            view2.classList.add('active');
+        });
+
+        const countGrid = document.getElementById('countGrid');
+        countGrid.addEventListener('click', (e) => {
+            if(e.target.classList.contains('grid-bead')) {
+                countGrid.querySelectorAll('.grid-bead').forEach(b => b.classList.remove('selected'));
+                e.target.classList.add('selected');
+                appState.countTarget = parseInt(e.target.getAttribute('data-value'));
+            }
+        });
+
+        document.getElementById('btnNext2').addEventListener('click', () => {
+            const targetInput = document.getElementById('customChantInput').value.trim();
+            appState.rawChantTarget = targetInput ? targetInput : (appState.lang === 'hi' ? "राधे कृष्णा" : "Radhe Krishna");
+            
+            buildPhoneticGodNamesMatrix(appState.rawChantTarget);
+
+            view2.classList.remove('active');
+            view3.classList.add('active');
+            triggerLiveWorkspace();
+        });
+
+        function updateLiveStatusBox() {
+            document.getElementById('statusStatement').innerHTML = `<span>${appState.user}</span> ${langPack[appState.lang].isChanting} <br><strong>"${appState.rawChantTarget}"</strong>`;
+        }
+
+        function triggerLiveWorkspace() {
+            document.getElementById('targetCount').textContent = `/ ${appState.countTarget}`;
+            document.getElementById('liveCount').textContent = appState.currentCount;
+            updateLiveStatusBox();
+            syncVisualProgress();
+            manageMicChannel(true);
+        }
+
+        function buildPhoneticGodNamesMatrix(input) {
+            let clean = input.toLowerCase().trim();
+            let tokens = new Set();
+
+            clean.split(/\s+/).forEach(w => { if(w.length > 1) tokens.add(w); });
+
+            if (clean.includes('radhe') || clean.includes('krishna') || clean.includes('राधे') || clean.includes('कृष्ण') || clean.includes('gaur') || clean.includes('गौर')) {
+                tokens.add('radhe').add('radha').add('radhika').add('krishna').add('krisna').add('krsna').add('krishn').add('kanha').add('shyam').add('राधे').add('कृष्ण').add('कृष्णा').add('राधा').add('गौर').add('गौरांग').add('gaurang').add('gaura');
+            }
+            if (clean.includes('ram') || clean.includes('राम') || clean.includes('shri') || clean.includes('shree') || clean.includes('sri')) {
+                tokens.add('ram').add('rama').add('ramachandra').add('राम').add('रामा').add('जय').add('jai').add('jay').add('siya').add('siyaram').add('shree').add('shri').add('sri').add('sree').add('श्री');
+            }
+            if (clean.includes('narayan') || clean.includes('नारायण') || clean.includes('hari') || clean.includes('हरि')) {
+                tokens.add('narayan').add('narayana').add('naraayan').add('shriman').add('sriman').add('shreeman').add('नारायण').add('नारायन').add('श्रीमन्नारायण').add('hari').add('hare').add('हरि').add('हरे');
+            }
+            if (clean.includes('harivansh') || clean.includes('हरिवंश')) {
+                tokens.add('harivansh').add('harivansha').add('haribansh').add('hit').add('हरिवंश').add('हरिबंश');
+            }
+            if (clean.includes('vasudev') || clean.includes('वासुदेव') || clean.includes('namo')) {
+                tokens.add('vasudev').add('vasudeva').add('vaasudev').add('om').add('namo').add('bhagavate').add('bhagwate').add('वासुदेव').add('नमो').add('भगवते').add('ॐ');
+            }
+            if (clean.includes('mahadev') || clean.includes('महादेव') || clean.includes('shiva') || clean.includes('ganesh') || clean.includes('vishnu')) {
+                tokens.add('mahadev').add('mahadeva').add('shiva').add('shiv').add('shanker').add('shankar').add('bholenath').add('महादेव').add('शिव').add('शंकर').add('ganesh').add('ganesha').add('ganpati').add('गौरीसुत').add('vishnu').add('visnu').add('विष्णु');
+            }
+
+            appState.matchTokens = Array.from(tokens);
+        }
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let speechEngine = null;
+
+        function initSpeechEngine() {
+            if (!SpeechRecognition) return;
+            
+            speechEngine = new SpeechRecognition();
+            speechEngine.continuous = true;
+            speechEngine.interimResults = true; 
+            speechEngine.lang = appState.lang === 'hi' ? 'hi-IN' : 'en-IN';
+
+            speechEngine.onresult = (event) => {
+                let currentLiveParagraph = "";
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    currentLiveParagraph += event.results[i][0].transcript + " ";
+                }
+                let cleanSegmentText = currentLiveParagraph.toLowerCase().trim();
+                document.getElementById('liveSpeech').textContent = cleanSegmentText;
+                evaluateSlidingWindowStream(cleanSegmentText);
+            };
+
+            speechEngine.onerror = () => { if (appState.isListening) keepMicAlive(); };
+            speechEngine.onend = () => { if (appState.isListening) keepMicAlive(); };
+        }
+
+        function keepMicAlive() {
+            try { speechEngine.stop(); } catch(e){}
+            setTimeout(() => {
+                if (appState.isListening) { 
+                    appState.processedWordsPointer = 0; 
+                    try { speechEngine.start(); } catch(e){} 
+                }
+            }, 60); 
+        }
+
+        function restartSpeechEngineWithNewLang() {
+            try { speechEngine.stop(); } catch(e){}
+            buildPhoneticGodNamesMatrix(appState.rawChantTarget);
+            initSpeechEngine();
+            setTimeout(() => {
+                if (appState.isListening) { try { speechEngine.start(); } catch(e){} }
+            }, 100);
+        }
+
+        function evaluateSlidingWindowStream(liveText) {
+            let individualWords = liveText.split(/\s+/).filter(w => w.length > 0);
+            let validMatchesInStream = 0;
+
+            individualWords.forEach(word => {
+                let baseRootWord = word.replace(/[ंःािीुूेैोौ्]/g, ''); 
+                let checkRegistry = appState.matchTokens.some(target => {
+                    return word === target || 
+                           baseRootWord === target || 
+                           word.includes(target) ||
+                           (word.length > 2 && target.substring(0, 3) === word.substring(0, 3));
+                });
+                if (checkRegistry) validMatchesInStream++;
+            });
+
+            let phraseLengthDivisor = appState.rawChantTarget.split(/\s+/).length;
+            if (phraseLengthDivisor <= 0) phraseLengthDivisor = 1;
+
+            let totalInferredChants = Math.floor(validMatchesInStream / phraseLengthDivisor);
+
+            if (totalInferredChants > appState.processedWordsPointer) {
+                let actualNewIncrements = totalInferredChants - appState.processedWordsPointer;
+                appState.processedWordsPointer = totalInferredChants; 
+                applyIncrementalStep(actualNewIncrements);
+            }
+        }
+
+        function applyIncrementalStep(units) {
+            if(appState.currentCount >= appState.countTarget) return;
+            for(let k = 0; k < units; k++) {
+                if(appState.currentCount < appState.countTarget) {
+                    appState.currentCount += 1;
+                }
+            }
+            document.getElementById('liveCount').textContent = appState.currentCount;
+            syncVisualProgress();
+            if(appState.currentCount >= appState.countTarget) buildAndLaunchCertificateView();
+        }
+
+        const btnMic = document.getElementById('btnMic');
+        btnMic.addEventListener('click', () => {
+            manageMicChannel(!appState.isListening);
+        });
+
+        function manageMicChannel(activateState) {
+            appState.isListening = activateState;
+            if (!speechEngine) initSpeechEngine();
+
+            if(appState.isListening) {
+                btnMic.classList.add('hot-stream');
+                btnMic.textContent = "⏸️";
+                document.getElementById('liveSpeech').textContent = langPack[appState.lang].listening;
+                appState.processedWordsPointer = 0; 
+                try { speechEngine.start(); } catch(e) {}
+            } else {
+                btnMic.classList.remove('hot-stream');
+                btnMic.textContent = "🎤";
+                document.getElementById('liveSpeech').textContent = langPack[appState.lang].paused;
+                try { speechEngine.stop(); } catch(e) {}
+            }
+        }
+
+        function syncVisualProgress() {
+            const strokeRing = document.getElementById('progressCircle');
+            const circumference = 2 * Math.PI * 100; 
+            let percentageFilled = appState.currentCount / appState.countTarget;
+            strokeRing.style.strokeDashoffset = circumference - (percentageFilled * circumference);
+        }
+
+        function buildAndLaunchCertificateView() {
+            manageMicChannel(false);
+            
+            view3.classList.remove('active');
+            view4.classList.add('active');
+
+            const pack = langPack[appState.lang];
+            document.getElementById('certHeader').textContent = pack.certHeader;
+            document.getElementById('certTitle').textContent = pack.certTitle;
+            document.getElementById('btnScreenshotHint').textContent = pack.shareText;
+
+            let customizedMessageBody = pack.certMsg
+                .replace('[NAME]', appState.user)
+                .replace('[CHANT]', appState.rawChantTarget)
+                .replace('[TARGET]', appState.countTarget);
+
+            document.getElementById('certBody').innerHTML = customizedMessageBody;
+
+            // DYNAMIC AUTOMATIC TIMESTAMP GENERATOR
+            const today = new Date();
+            const localDateString = today.toLocaleDateString(appState.lang === 'hi' ? 'hi-IN' : 'en-US', {
+                year: 'numeric', month: 'long', day: 'numeric'
+            });
+            document.getElementById('certMetaRow').innerHTML = `<span>${pack.certDateLabel}: ${localDateString}</span>`;
+        }
+
+        document.getElementById('btnReset').addEventListener('click', () => {
+            appState.currentCount = 0;
+            appState.processedWordsPointer = 0;
+            document.getElementById('liveCount').textContent = 0;
+            syncVisualProgress();
+            manageMicChannel(true);
+        });
+
+        applyLanguagePack();
+    </script>
+</body>
+</html>
