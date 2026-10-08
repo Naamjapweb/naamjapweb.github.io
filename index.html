@@ -350,6 +350,32 @@ button.bg-berryPink:hover,button.bg-lilacDark:hover{filter:saturate(1.05) bright
 }
 @media(prefers-reduced-motion:reduce){.fx-blob,.cartoon-pop,.cartoon-squish{animation:none!important}}
 </style>
+
+<style>
+/* ===== Compact reaction peek + precise 1.5s hold-to-read ===== */
+#sidePeekContainer{
+  max-width:270px!important;
+  gap:6px!important;
+  pointer-events:auto;
+}
+#sidePeekSpeechBubble{
+  max-width:175px!important;
+  padding:10px!important;
+  border-radius:18px!important;
+}
+#sidePeekSpeechBubble #sidePeekSpeakerTag{font-size:8px!important;line-height:1.1!important}
+#sidePeekSpeechBubble #sidePeekDialogueText{font-size:11px!important;line-height:1.22!important;margin-top:4px!important}
+#sidePeekSpeechBubble .mt-2{margin-top:7px!important}
+#sidePeekSpeechBubble button{font-size:8px!important;padding:2px 7px!important}
+#sidePeekSpeechBubble #holdStatusIndicator{font-size:7px!important;line-height:1.1!important}
+#sidePeekingAvatarBox{width:64px!important;height:64px!important;flex:0 0 64px!important}
+@media(max-width:420px){
+  #sidePeekContainer{max-width:245px!important;gap:4px!important}
+  #sidePeekSpeechBubble{max-width:158px!important;padding:8px!important}
+  #sidePeekingAvatarBox{width:58px!important;height:58px!important;flex-basis:58px!important}
+  #sidePeekSpeechBubble #sidePeekDialogueText{font-size:10.5px!important}
+}
+</style>
 </head>
 
 <body class="flex flex-col justify-between selection:bg-berryPink selection:text-white relative">
@@ -1884,13 +1910,18 @@ button.bg-berryPink:hover,button.bg-lilacDark:hover{filter:saturate(1.05) bright
       const avatarBox = document.getElementById('sidePeekingAvatarBox');
       const speakerTag = document.getElementById('sidePeekSpeakerTag');
       const textTag = document.getElementById('sidePeekDialogueText');
+      const indicator = document.getElementById('holdStatusIndicator');
 
       speakerTag.innerText = isCorrect ? `${hostName} is happy! 🥰` : `${hostName} got a little grumpy! 😤`;
       textTag.innerText = `"${dialogue}"`;
       peekBox.classList.remove('panda-reaction', 'good', 'soft-angry');
       isHoldingPeek = false;
-      const _ind = document.getElementById('holdStatusIndicator');
-      if (_ind) { _ind.innerText = 'Hold character/message to keep reading 👆'; _ind.className = 'text-[8px] text-lilacDark font-bold'; }
+      peekRemainingMs = 1500;
+      peekShownAt = performance.now();
+      if (indicator) {
+        indicator.innerText = 'Hold character/message to keep reading 👆';
+        indicator.className = 'text-[8px] text-lilacDark font-bold';
+      }
 
       const emotion = isCorrect
         ? (arenaQuestionIndex % 3 === 0 ? "excited" : "praise")
@@ -1904,23 +1935,30 @@ button.bg-berryPink:hover,button.bg-lilacDark:hover{filter:saturate(1.05) bright
 
       const fromLeft = (arenaQuestionIndex % 2 === 1);
       if (fromLeft) {
-        peekBox.className = "fixed top-20 left-0 z-40 peek-from-l flex flex-row-reverse items-center gap-2 pl-2 max-w-[340px] active";
+        peekBox.className = "fixed top-20 left-0 z-40 peek-from-l flex flex-row-reverse items-center gap-1.5 pl-1.5 max-w-[270px] active";
       } else {
-        peekBox.className = "fixed top-20 right-0 z-40 peek-from-r flex items-center gap-2 pr-2 max-w-[340px] active";
+        peekBox.className = "fixed top-20 right-0 z-40 peek-from-r flex items-center gap-1.5 pr-1.5 max-w-[270px] active";
       }
       void peekBox.offsetWidth;
       peekBox.classList.add('panda-reaction', isCorrect ? 'good' : 'soft-angry');
 
-      schedulePeekDismiss(2000);
+      // The reaction stays for exactly ~1.5s, unless the player holds it.
+      schedulePeekDismiss(1500);
     }
+
+    let peekRemainingMs = 1500;
+    let peekShownAt = 0;
 
     function schedulePeekDismiss(durationMs) {
       clearTimeout(peekAutoTimer);
+      peekRemainingMs = Math.max(0, durationMs);
+      peekShownAt = performance.now();
       peekAutoTimer = setTimeout(() => {
         if (!isHoldingPeek) {
+          peekRemainingMs = 0;
           advanceToNextQuestionOrClimax();
         }
-      }, durationMs);
+      }, peekRemainingMs);
     }
 
     function setupHoldToReadListeners() {
@@ -1930,23 +1968,46 @@ button.bg-berryPink:hover,button.bg-lilacDark:hover{filter:saturate(1.05) bright
 
       const onHoldStart = (e) => {
         if (e && e.target && e.target.closest && e.target.closest('button')) return;
+        if (isHoldingPeek) return;
+
         isHoldingPeek = true;
+        const elapsed = peekShownAt ? (performance.now() - peekShownAt) : 0;
+        peekRemainingMs = Math.max(0, peekRemainingMs - elapsed);
         clearTimeout(peekAutoTimer);
+
+        if (e && e.currentTarget && e.pointerId != null && e.currentTarget.setPointerCapture) {
+          try { e.currentTarget.setPointerCapture(e.pointerId); } catch (_) {}
+        }
+
         if (indicator) {
-          indicator.innerText = "Holding... Reading 📖";
+          indicator.innerText = "Holding... Panda ruk gaya 👆";
           indicator.className = "text-[8px] text-berryPink font-chubby";
         }
       };
 
-      const onHoldEnd = () => {
-        if (isHoldingPeek) {
-          isHoldingPeek = false;
+      const onHoldEnd = (e) => {
+        if (!isHoldingPeek) return;
+
+        isHoldingPeek = false;
+        if (e && e.currentTarget && e.pointerId != null && e.currentTarget.releasePointerCapture) {
+          try { e.currentTarget.releasePointerCapture(e.pointerId); } catch (_) {}
+        }
+
+        // If the original 1.5s already passed while holding, continue immediately.
+        if (peekRemainingMs <= 0) {
           if (indicator) {
-            indicator.innerText = "Resumed! Moving on...";
+            indicator.innerText = "Moving on...";
             indicator.className = "text-[8px] text-mintDark font-chubby";
           }
-          schedulePeekDismiss(900);
+          advanceToNextQuestionOrClimax();
+          return;
         }
+
+        if (indicator) {
+          indicator.innerText = "Resumed! Moving on...";
+          indicator.className = "text-[8px] text-mintDark font-chubby";
+        }
+        schedulePeekDismiss(peekRemainingMs);
       };
 
       [bubble, avatar].forEach(el => {
@@ -1959,7 +2020,7 @@ button.bg-berryPink:hover,button.bg-lilacDark:hover{filter:saturate(1.05) bright
         el.addEventListener('pointerdown', onHoldStart);
         el.addEventListener('pointerup', onHoldEnd);
         el.addEventListener('pointercancel', onHoldEnd);
-        el.addEventListener('pointerleave', onHoldEnd);
+        el.addEventListener('lostpointercapture', onHoldEnd);
         el.addEventListener('contextmenu', ev => ev.preventDefault());
       });
     }
