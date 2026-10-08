@@ -234,7 +234,14 @@
   }
   @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}}
 
-  </style>
+  
+/* Peek: only character + message bubble, no white card behind */
+#sidePeekContainer,#sidePeekContainer.panda-reaction,#sidePeekContainer.panda-reaction.good,#sidePeekContainer.panda-reaction.soft-angry{
+  background:transparent!important;border:none!important;box-shadow:none!important;filter:none!important;
+}
+#sidePeekingAvatarBox{background:transparent!important;cursor:pointer}
+#sidePeekingAvatarBox svg{background:transparent!important;filter:drop-shadow(0 4px 6px rgba(55,40,65,.22))}
+</style>
 <style>
 /* ===== EXTREME CARTOON LAB — senior-product polish ===== */
 :root{
@@ -1881,6 +1888,9 @@ button.bg-berryPink:hover,button.bg-lilacDark:hover{filter:saturate(1.05) bright
       speakerTag.innerText = isCorrect ? `${hostName} is happy! 🥰` : `${hostName} got a little grumpy! 😤`;
       textTag.innerText = `"${dialogue}"`;
       peekBox.classList.remove('panda-reaction', 'good', 'soft-angry');
+      isHoldingPeek = false;
+      const _ind = document.getElementById('holdStatusIndicator');
+      if (_ind) { _ind.innerText = 'Hold character/message to keep reading 👆'; _ind.className = 'text-[8px] text-lilacDark font-bold'; }
 
       const emotion = isCorrect
         ? (arenaQuestionIndex % 3 === 0 ? "excited" : "praise")
@@ -1901,7 +1911,7 @@ button.bg-berryPink:hover,button.bg-lilacDark:hover{filter:saturate(1.05) bright
       void peekBox.offsetWidth;
       peekBox.classList.add('panda-reaction', isCorrect ? 'good' : 'soft-angry');
 
-      schedulePeekDismiss(2600);
+      schedulePeekDismiss(2000);
     }
 
     function schedulePeekDismiss(durationMs) {
@@ -1915,28 +1925,43 @@ button.bg-berryPink:hover,button.bg-lilacDark:hover{filter:saturate(1.05) bright
 
     function setupHoldToReadListeners() {
       const bubble = document.getElementById('sidePeekSpeechBubble');
+      const avatar = document.getElementById('sidePeekingAvatarBox');
       const indicator = document.getElementById('holdStatusIndicator');
 
-      const onHoldStart = () => {
+      const onHoldStart = (e) => {
+        if (e && e.target && e.target.closest && e.target.closest('button')) return;
         isHoldingPeek = true;
         clearTimeout(peekAutoTimer);
-        indicator.innerText = "Holding... Reading 📖";
-        indicator.className = "text-[8px] text-berryPink font-chubby";
+        if (indicator) {
+          indicator.innerText = "Holding... Reading 📖";
+          indicator.className = "text-[8px] text-berryPink font-chubby";
+        }
       };
 
       const onHoldEnd = () => {
         if (isHoldingPeek) {
           isHoldingPeek = false;
-          indicator.innerText = "Resumed! Moving on...";
-          indicator.className = "text-[8px] text-mintDark font-chubby";
-          schedulePeekDismiss(1200);
+          if (indicator) {
+            indicator.innerText = "Resumed! Moving on...";
+            indicator.className = "text-[8px] text-mintDark font-chubby";
+          }
+          schedulePeekDismiss(900);
         }
       };
 
-      bubble.onmousedown = onHoldStart;
-      bubble.onmouseup = onHoldEnd;
-      bubble.ontouchstart = onHoldStart;
-      bubble.ontouchend = onHoldEnd;
+      [bubble, avatar].forEach(el => {
+        if (!el || el.dataset.holdBound === '1') return;
+        el.dataset.holdBound = '1';
+        el.style.touchAction = 'none';
+        el.style.userSelect = 'none';
+        el.style.webkitUserSelect = 'none';
+        el.style.webkitTouchCallout = 'none';
+        el.addEventListener('pointerdown', onHoldStart);
+        el.addEventListener('pointerup', onHoldEnd);
+        el.addEventListener('pointercancel', onHoldEnd);
+        el.addEventListener('pointerleave', onHoldEnd);
+        el.addEventListener('contextmenu', ev => ev.preventDefault());
+      });
     }
 
     function closePeekImmediately() {
@@ -1947,6 +1972,7 @@ button.bg-berryPink:hover,button.bg-lilacDark:hover{filter:saturate(1.05) bright
 
     function advanceToNextQuestionOrClimax() {
       const peekBox = document.getElementById('sidePeekContainer');
+      if (!peekBox.classList.contains('active')) return;
       peekBox.classList.remove('active');
 
       setTimeout(() => {
